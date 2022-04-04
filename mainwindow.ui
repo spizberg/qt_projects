@@ -148,17 +148,86 @@
            <bool>false</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="2" column="2">
-            <widget class="QLabel" name="seuilLabel">
+           <item row="0" column="1">
+            <widget class="QComboBox" name="modelComboBox">
+             <property name="font">
+              <font>
+               <pointsize>8</pointsize>
+               <kerning>true</kerning>
+              </font>
+             </property>
+             <property name="editable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QLabel" name="colorLabel">
              <property name="text">
-              <string>Seuil (détourage)</string>
+              <string>Couleur</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
              </property>
             </widget>
            </item>
-           <item row="2" column="3">
+           <item row="0" column="4">
+            <widget class="QLabel" name="viewLabel">
+             <property name="text">
+              <string>N° de vue</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="modelLabel">
+             <property name="text">
+              <string>Modèle</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="stateLabel">
+             <property name="text">
+              <string>Etat</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3">
+            <widget class="QLineEdit" name="colorLineEdit">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>8</pointsize>
+               <kerning>true</kerning>
+              </font>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QComboBox" name="stateComboBox">
+             <property name="font">
+              <font>
+               <pointsize>8</pointsize>
+               <kerning>true</kerning>
+              </font>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="5">
             <widget class="QSpinBox" name="seuilSpinBox">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
@@ -211,27 +280,7 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="4">
-            <widget class="QLabel" name="viewLabel">
-             <property name="text">
-              <string>N° de vue</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="modelLabel">
-             <property name="text">
-              <string>Modèle</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="7">
+           <item row="3" column="5">
             <widget class="QPushButton" name="captureButton">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -244,57 +293,28 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="3">
-            <widget class="QLineEdit" name="colorLineEdit">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-               <kerning>true</kerning>
-              </font>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="stateLabel">
+           <item row="2" column="4">
+            <widget class="QLabel" name="seuilLabel">
              <property name="text">
-              <string>Etat</string>
+              <string>Seuil (détourage)</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
              </property>
             </widget>
            </item>
-           <item row="0" column="2">
-            <widget class="QLabel" name="colorLabel">
+           <item row="2" column="2">
+            <widget class="QLabel" name="marqueLabel">
              <property name="text">
-              <string>Couleur</string>
+              <string>Marque</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QComboBox" name="modelComboBox">
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-               <kerning>true</kerning>
-              </font>
-             </property>
-             <property name="editable">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QComboBox" name="stateComboBox">
+           <item row="2" column="3">
+            <widget class="QComboBox" name="marqueComboBox">
              <property name="font">
               <font>
                <pointsize>8</pointsize>

@@ -14,8 +14,10 @@ MainWindow::MainWindow(QWidget *parent)
     converter.OutputBitAlignment = Pylon::OutputBitAlignment_MsbAligned;
 
     ui->stateComboBox->addItems(stateList);
-    modelList = getModelNames("/home/nathan/QtProjects/CellulePhoto/classes.txt");
+    modelList = getModelNames(classFile);
     ui->modelComboBox->addItems(modelList);
+    ui->marqueComboBox->addItems(marqueList);
+    ui->colorLineEdit->setText("Unique");
 
     _cameraTimer = new QTimer();
     _cameraTimer->setInterval(10);
@@ -51,13 +53,16 @@ QStringList MainWindow::getModelNames(const std::string &filename)
 {
     std::ifstream my_file{filename};
     if (!my_file.is_open()){
-        std::cerr << "Cannot open classe name file!";
+        std::cerr << "Cannot open classe name file!\n";
         throw std::exception();
     }
     std::string model_name;
     std::vector<std::string> modelNames;
-    while (my_file >> model_name)
-        modelNames.push_back(model_name);
+    while (!my_file.eof()){
+        if (std::getline(my_file, model_name))
+            modelNames.push_back(model_name);
+    }
+    my_file.close();
     QStringList result;
     for (std::string& model : modelNames){
         result.append(QString::fromStdString(model));
@@ -68,16 +73,15 @@ QStringList MainWindow::getModelNames(const std::string &filename)
 void MainWindow::displayImagesTimer()
 {
     Pylon::CGrabResultPtr grabResultPtr;
-    cv::Mat opencvImage;
     Pylon::CPylonImage pylonImage;
     if(camera.IsGrabbing()){
         camera.RetrieveResult(5, grabResultPtr, Pylon::TimeoutHandling_ThrowException);
         if (grabResultPtr->GrabSucceeded()){
             converter.Convert(pylonImage, grabResultPtr);
-            opencvImage = cv::Mat(grabResultPtr->GetHeight(), grabResultPtr->GetWidth(), CV_8UC3, (uint8_t *)pylonImage.GetBuffer());
-            const QImage streamFrame(opencvImage.data,opencvImage.cols, opencvImage.rows, QImage::Format_BGR888);
-            const cv::Mat subtractedFrame{subtractShoeFromBackground(opencvImage, threshold)};
-            const QImage subtractFrame(subtractedFrame.data, subtractedFrame.cols, subtractedFrame.rows, QImage::Format_BGR888);
+            realShoeImage = cv::Mat(grabResultPtr->GetHeight(), grabResultPtr->GetWidth(), CV_8UC3, (uint8_t *)pylonImage.GetBuffer());
+            const QImage streamFrame(realShoeImage.data, realShoeImage.cols, realShoeImage.rows, QImage::Format_BGR888);
+            subtractedShoeImage = subtractShoeFromBackground(realShoeImage, threshold);
+            const QImage subtractFrame(subtractedShoeImage.data, subtractedShoeImage.cols, subtractedShoeImage.rows, QImage::Format_BGR888);
             ui->streamLabel->setPixmap(QPixmap::fromImage(streamFrame.scaledToWidth(880)));
             ui->subObjectLabel->setPixmap(QPixmap::fromImage(subtractFrame.scaledToWidth(880)));
         }
@@ -122,7 +126,31 @@ void MainWindow::on_seuilSpinBox_valueChanged(int newThreshold)
 
 void MainWindow::on_captureButton_clicked()
 {
+    saveImage();
     int prevValue = ui->viewSpinBox->value();
     ui->viewSpinBox->setValue( prevValue == 8 ? 1 : prevValue + 1 );
+}
+
+void MainWindow::saveImage()
+{
+    std::string filename;
+    const auto timestamp {std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()};
+    const std::string model_name = ui->modelComboBox->currentText().trimmed().toUpper().toStdString();
+    const int state = (ui->stateComboBox->currentText().toStdString() == "Neuve" ? 1 : 0);
+    const std::string color = ui->colorLineEdit->text().trimmed().toLower().toStdString();
+    const int view = ui->viewSpinBox->value();
+    const std::string marque = (ui->marqueComboBox->currentText().toLower() == "decathlon" ? " D":" E");
+    filename = model_name + "_" + color + "_" + std::to_string(view) + "_" +
+            std::to_string(state) + "_" + std::to_string(timestamp) + ".png";
+
+    qInfo() << "Filename...\n" << QString::fromStdString(filename);
+    const std::string modelFolder {imageFolder + model_name + marque};
+
+    qInfo() << "Model folder...\n" << QString::fromStdString(modelFolder);
+    if (!modelList.contains(QString::fromStdString(model_name), Qt::CaseInsensitive))
+        std::filesystem::create_directory(modelFolder);
+
+    qInfo() << "Prepared to save...\n" << subtractedShoeImage.rows;
+    cv::imwrite(modelFolder + "/" + filename, subtractedShoeImage);
 }
 

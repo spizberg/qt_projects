@@ -27,6 +27,7 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
+        classes.txt
         ${TS_FILES}
 )
 

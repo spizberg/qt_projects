@@ -14,6 +14,8 @@
 #include <QMainWindow>
 #include <fstream>
 #include <exception>
+#include <chrono>
+#include <filesystem>
 
 
 QT_BEGIN_NAMESPACE
@@ -33,15 +35,18 @@ protected:
     cv::Mat subtractShoeFromBackground(const cv::Mat &img, const int thresh);
     int getMaxAreaContourId(std::vector<std::vector<cv::Point>> contours);
     QStringList getModelNames(const std::string &filename);
-    // void saveImage(const cv::Mat &frame);
-
 
 private:
     Pylon::PylonAutoInitTerm _autoInitTerm;
     Pylon::CBaslerUniversalInstantCamera camera{Pylon::CTlFactory::GetInstance().CreateFirstDevice()};
     Pylon::CImageFormatConverter converter {Pylon::CImageFormatConverter()};
+    cv::Mat realShoeImage;
+    cv::Mat subtractedShoeImage;
     const QStringList stateList {"Neuve", "Usée"};
+    const QStringList marqueList {"DECATHLON", "ERAM"};
     QStringList modelList;
+    const std::string imageFolder {"/home/nathan/Code/ID_SHOES_PICTURES/IDSHOES_2/PHOTO_CELL/WHITE_DATA_FOLDER/images/"};
+    const std::string classFile {"/home/nathan/QtProjects/CellulePhoto/classes.txt"};
 
     int threshold {15};
 
@@ -53,5 +58,7 @@ private slots:
     void displayImagesTimer();
     void on_seuilSpinBox_valueChanged(int newThreshold);
     void on_captureButton_clicked();
+    void saveImage();
+
 };
 #endif // MAINWINDOW_H
