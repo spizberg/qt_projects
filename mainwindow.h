@@ -15,7 +15,7 @@
 #include <fstream>
 #include <exception>
 #include <chrono>
-#include <filesystem>
+#include <QDir>
 
 
 QT_BEGIN_NAMESPACE
@@ -45,7 +45,7 @@ private:
     const QStringList stateList {"Neuve", "Usée"};
     const QStringList marqueList {"DECATHLON", "ERAM"};
     QStringList modelList;
-    const std::string imageFolder {"/home/nathan/Code/ID_SHOES_PICTURES/IDSHOES_2/PHOTO_CELL/WHITE_DATA_FOLDER/images/"};
+    const QDir imageFolder {"/home/nathan/Code/ID_SHOES_PICTURES/IDSHOES_2/PHOTO_CELL/WHITE_DATA_FOLDER/images/"};
     const std::string classFile {"/home/nathan/QtProjects/CellulePhoto/classes.txt"};
 
     int threshold {15};

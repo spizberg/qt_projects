@@ -133,24 +133,26 @@ void MainWindow::on_captureButton_clicked()
 
 void MainWindow::saveImage()
 {
-    std::string filename;
-    const auto timestamp {std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()};
-    const std::string model_name = ui->modelComboBox->currentText().trimmed().toUpper().toStdString();
-    const int state = (ui->stateComboBox->currentText().toStdString() == "Neuve" ? 1 : 0);
-    const std::string color = ui->colorLineEdit->text().trimmed().toLower().toStdString();
-    const int view = ui->viewSpinBox->value();
-    const std::string marque = (ui->marqueComboBox->currentText().toLower() == "decathlon" ? " D":" E");
-    filename = model_name + "_" + color + "_" + std::to_string(view) + "_" +
-            std::to_string(state) + "_" + std::to_string(timestamp) + ".png";
+    QString filename;
+    auto timestamp {std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()};
+    QString strTimestamp = QString::number(timestamp);
+    const QString model_name = ui->modelComboBox->currentText().trimmed().toUpper();
+    const QString state = (ui->stateComboBox->currentText() == "Neuve" ? "1" : "0");
+    const QString color = ui->colorLineEdit->text().trimmed().toLower();
+    const QString view = ui->viewSpinBox->text();
+    const QString marque = (ui->marqueComboBox->currentText().toLower() == "decathlon" ? " D":" E");
 
-    qInfo() << "Filename...\n" << QString::fromStdString(filename);
-    const std::string modelFolder {imageFolder + model_name + marque};
+    filename = model_name + "_" + color + "_" + view + "_" + state + "_" + strTimestamp + ".png";
+    qInfo() << "Filename...\n" << filename;
 
-    qInfo() << "Model folder...\n" << QString::fromStdString(modelFolder);
-    if (!modelList.contains(QString::fromStdString(model_name), Qt::CaseInsensitive))
-        std::filesystem::create_directory(modelFolder);
+    if (!modelList.contains(model_name, Qt::CaseInsensitive))
+        imageFolder.mkdir(model_name + marque);
+
+    const QDir modelFolder {imageFolder.path() + "/" + model_name + marque};
+    qInfo() << "Model folder...\n" << modelFolder;
 
     qInfo() << "Prepared to save...\n" << subtractedShoeImage.rows;
-    cv::imwrite(modelFolder + "/" + filename, subtractedShoeImage);
+    cv::imwrite(modelFolder.path().toStdString() + "/" + filename.toStdString(), subtractedShoeImage,
+                std::vector<int>{cv::IMWRITE_PNG_COMPRESSION, 0});
 }
 
