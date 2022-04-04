@@ -16,6 +16,7 @@
 #include <exception>
 #include <chrono>
 #include <QDir>
+#include <QMessageBox>
 
 
 QT_BEGIN_NAMESPACE
@@ -47,6 +48,7 @@ private:
     QStringList modelList;
     const QDir imageFolder {"/home/nathan/Code/ID_SHOES_PICTURES/IDSHOES_2/PHOTO_CELL/WHITE_DATA_FOLDER/images/"};
     const std::string classFile {"/home/nathan/QtProjects/CellulePhoto/classes.txt"};
+    bool pause{false};
 
     int threshold {15};
 

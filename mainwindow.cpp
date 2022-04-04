@@ -74,7 +74,7 @@ void MainWindow::displayImagesTimer()
 {
     Pylon::CGrabResultPtr grabResultPtr;
     Pylon::CPylonImage pylonImage;
-    if(camera.IsGrabbing()){
+    if(camera.IsGrabbing() && !pause){
         camera.RetrieveResult(5, grabResultPtr, Pylon::TimeoutHandling_ThrowException);
         if (grabResultPtr->GrabSucceeded()){
             converter.Convert(pylonImage, grabResultPtr);
@@ -126,9 +126,20 @@ void MainWindow::on_seuilSpinBox_valueChanged(int newThreshold)
 
 void MainWindow::on_captureButton_clicked()
 {
-    saveImage();
-    int prevValue = ui->viewSpinBox->value();
-    ui->viewSpinBox->setValue( prevValue == 8 ? 1 : prevValue + 1 );
+    // saveImage();
+    QMessageBox msgBox;
+    msgBox.setText("Image acquise.");
+    msgBox.setInformativeText("Voulez vous la sauvegarder?");
+    msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Save);
+    pause = true;
+    int ret = msgBox.exec();
+    if (ret == QMessageBox::Save){
+        saveImage();
+        int prevValue = ui->viewSpinBox->value();
+        ui->viewSpinBox->setValue( prevValue == 8 ? 1 : prevValue + 1 );
+    }
+    pause = false;
 }
 
 void MainWindow::saveImage()
@@ -143,15 +154,12 @@ void MainWindow::saveImage()
     const QString marque = (ui->marqueComboBox->currentText().toLower() == "decathlon" ? " D":" E");
 
     filename = model_name + "_" + color + "_" + view + "_" + state + "_" + strTimestamp + ".png";
-    qInfo() << "Filename...\n" << filename;
 
     if (!modelList.contains(model_name, Qt::CaseInsensitive))
         imageFolder.mkdir(model_name + marque);
 
     const QDir modelFolder {imageFolder.path() + "/" + model_name + marque};
-    qInfo() << "Model folder...\n" << modelFolder;
 
-    qInfo() << "Prepared to save...\n" << subtractedShoeImage.rows;
     cv::imwrite(modelFolder.path().toStdString() + "/" + filename.toStdString(), subtractedShoeImage,
                 std::vector<int>{cv::IMWRITE_PNG_COMPRESSION, 0});
 }
