@@ -10,12 +10,15 @@ MainWindow::MainWindow(QWidget *parent)
     camera.Open();
     camera.ExposureTime.SetValue(10000);
     camera.StartGrabbing(Pylon::GrabStrategy_LatestImages);
+    // camera.StartGrabbing(Pylon::GrabStrategy_LatestImageOnly);
     converter.OutputPixelFormat = Pylon::PixelType_BGR8packed;
     converter.OutputBitAlignment = Pylon::OutputBitAlignment_MsbAligned;
 
     ui->stateComboBox->addItems(stateList);
     modelList = getModelNames(classFile);
+    // modelList.sort();
     ui->modelComboBox->addItems(modelList);
+    ui->modelComboBox->model()->sort(0);
     ui->marqueComboBox->addItems(marqueList);
     ui->colorLineEdit->setText("Unique");
 
@@ -36,7 +39,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
 }
 
-int MainWindow::getMaxAreaContourId(std::vector<std::vector<cv::Point>> contours) {
+int MainWindow::getMaxAreaContourId(std::vector<std::vector<cv::Point>> &contours) {
     double maxArea = 0;
     int maxAreaContourId = -1;
     for (int j = 0; j < contours.size(); j++) {
@@ -70,6 +73,30 @@ QStringList MainWindow::getModelNames(const std::string &filename)
     return result;
 }
 
+void MainWindow::writeNewModelName(const QString &modelName)
+{
+    QFile my_file{QString::fromStdString(classFile)};
+    if (!my_file.open(QIODevice::Append)){
+        std::cerr << "Cannot open classe name file!\n";
+        throw std::exception();
+    }
+    QTextStream out(&my_file);
+    out << modelName;
+    my_file.close();
+}
+
+void MainWindow::writeInfoModel(const QString &modelName, const QString &color, const QString &sku)
+{
+    QFile my_file{QString::fromStdString(infoFile)};
+    if (!my_file.open(QIODevice::Append)){
+        std::cerr << "Cannot open models info file!\n";
+        throw std::exception();
+    }
+    QTextStream out(&my_file);
+    out << modelName + "-" + color + "-" + sku + "\n";
+    my_file.close();
+}
+
 void MainWindow::displayImagesTimer()
 {
     Pylon::CGrabResultPtr grabResultPtr;
@@ -79,9 +106,9 @@ void MainWindow::displayImagesTimer()
         if (grabResultPtr->GrabSucceeded()){
             converter.Convert(pylonImage, grabResultPtr);
             realShoeImage = cv::Mat(grabResultPtr->GetHeight(), grabResultPtr->GetWidth(), CV_8UC3, (uint8_t *)pylonImage.GetBuffer());
-            const QImage streamFrame(realShoeImage.data, realShoeImage.cols, realShoeImage.rows, QImage::Format_BGR888);
+            QImage streamFrame(realShoeImage.data, realShoeImage.cols, realShoeImage.rows, QImage::Format_BGR888);
             subtractedShoeImage = subtractShoeFromBackground(realShoeImage, threshold);
-            const QImage subtractFrame(subtractedShoeImage.data, subtractedShoeImage.cols, subtractedShoeImage.rows, QImage::Format_BGR888);
+            QImage subtractFrame(subtractedShoeImage.data, subtractedShoeImage.cols, subtractedShoeImage.rows, QImage::Format_BGR888);
             ui->streamLabel->setPixmap(QPixmap::fromImage(streamFrame.scaledToWidth(880)));
             ui->subObjectLabel->setPixmap(QPixmap::fromImage(subtractFrame.scaledToWidth(880)));
         }
@@ -110,13 +137,16 @@ cv::Mat MainWindow::subtractShoeFromBackground(const cv::Mat &img, const int thr
         // Create shoe's mask with contour
         cv::Mat drawing(gray_img.rows, gray_img.cols, CV_8U);
         cv::drawContours(drawing, best_contours, 0, cv::Scalar(255, 255, 255), -1);
+        // Threshold mask to remove noise
+        cv::Mat threshImg;
+        cv::threshold(drawing, threshImg, 254, 255, cv::THRESH_BINARY );
+        // Get shoe bounding box
+        boundingBox = cv::boundingRect(threshImg);
         // Get only shoe from image
         cv::Mat subtracted_shoe;
-        cv::bitwise_and(img, img, subtracted_shoe, drawing);
-
+        cv::bitwise_and(img, img, subtracted_shoe, threshImg);
         return subtracted_shoe;
 }
-
 
 void MainWindow::on_seuilSpinBox_valueChanged(int newThreshold)
 {
@@ -135,32 +165,55 @@ void MainWindow::on_captureButton_clicked()
     pause = true;
     int ret = msgBox.exec();
     if (ret == QMessageBox::Save){
-        saveImage();
+        saveResultImage();
         int prevValue = ui->viewSpinBox->value();
         ui->viewSpinBox->setValue( prevValue == 8 ? 1 : prevValue + 1 );
     }
     pause = false;
 }
 
-void MainWindow::saveImage()
+void MainWindow::saveResultImage()
 {
-    QString filename;
+    QString real_filename;
+    QString sub_filename;
     auto timestamp {std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()};
     QString strTimestamp = QString::number(timestamp);
     const QString model_name = ui->modelComboBox->currentText().trimmed().toUpper();
+    const QString sku = ui->skuLineEdit->text().trimmed();
     const QString state = (ui->stateComboBox->currentText() == "Neuve" ? "1" : "0");
     const QString color = ui->colorLineEdit->text().trimmed().toLower();
     const QString view = ui->viewSpinBox->text();
     const QString marque = (ui->marqueComboBox->currentText().toLower() == "decathlon" ? " D":" E");
 
-    filename = model_name + "_" + color + "_" + view + "_" + state + "_" + strTimestamp + ".png";
+    real_filename = "real_" + model_name.toLower() + "_" + color + "_" + view + "_" + state + "_" + strTimestamp + ".png";
+    sub_filename = "sub_" + model_name.toLower() + "_" + color + "_" + view + "_" + state + "_" + strTimestamp + ".png";
 
-    if (!modelList.contains(model_name, Qt::CaseInsensitive))
-        imageFolder.mkdir(model_name + marque);
+    if (ui->modelComboBox->findText(model_name) == -1){
+        bool dirCreated = imageFolder.mkdir(model_name + marque);
+        if (dirCreated){
+            // QString model_name_with_return = model_name + "\n"
+            ui->modelComboBox->addItem(model_name);
+            ui->modelComboBox->model()->sort(0);
+            // ui->modelComboBox->findText(model_name);
+            writeNewModelName(model_name + "\n");
+            writeInfoModel(model_name, color, sku);
+        }
+        else{
+            throw std::exception();
+        }
+    }
 
     const QDir modelFolder {imageFolder.path() + "/" + model_name + marque};
 
-    cv::imwrite(modelFolder.path().toStdString() + "/" + filename.toStdString(), subtractedShoeImage,
+//    cv::imwrite(modelFolder.path().toStdString() + "/" + real_filename.toStdString(), realShoeImage,
+//                std::vector<int>{cv::IMWRITE_PNG_COMPRESSION, 0});
+    cv::imwrite(modelFolder.path().toStdString() + "/" + sub_filename.toStdString(), subtractedShoeImage(boundingBox),
                 std::vector<int>{cv::IMWRITE_PNG_COMPRESSION, 0});
+}
+
+
+void MainWindow::on_modelComboBox_currentTextChanged(const QString &arg1)
+{
+    ui->viewSpinBox->setValue(1);
 }
 
